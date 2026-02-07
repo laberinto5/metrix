@@ -1,0 +1,23 @@
+{
+  "case_sensitive": false,
+  "reference_replacements": {
+    "teh": "the",
+    "adn": "and"
+  },
+  "equivalences": {
+    "want_to": ["want to", "wanna"],
+    "going_to": ["going to", "gonna"],
+    "dont_know": ["don't know", "dunno"]
+  },
+  "clean_up": [
+    "wow",
+    "huh",
+    "ugh",
+    "uhg",
+    "yay",
+    "uh",
+    "ah",
+    "eh"
+  ]
+}
+
