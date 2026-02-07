@@ -1,5 +1,5 @@
 """
-Tests unitarios para el módulo output_generator.
+Unit tests for output_generator module.
 """
 
 import pytest
@@ -17,10 +17,10 @@ from src.output_generator import (
 
 
 class TestGenerateCsvOutput:
-    """Tests para generate_csv_output."""
+    """Tests for generate_csv_output."""
     
     def test_generate_csv_output_wer(self):
-        """Test generación de CSV para WER."""
+        """Test CSV generation for WER."""
         metrics = {
             'word_count': 10,
             'wer': 0.1,
@@ -38,7 +38,7 @@ class TestGenerateCsvOutput:
         try:
             generate_csv_output(metrics, temp_path, metric_type='wer')
             
-            # Verificar que el archivo existe y tiene contenido
+            # Verify that the file exists and has content
             assert temp_path.exists()
             with open(temp_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
@@ -49,7 +49,7 @@ class TestGenerateCsvOutput:
             temp_path.unlink()
     
     def test_generate_csv_output_cer(self):
-        """Test generación de CSV para CER."""
+        """Test CSV generation for CER."""
         metrics = {
             'character_count': 50,
             'cer': 0.05,
@@ -72,10 +72,10 @@ class TestGenerateCsvOutput:
 
 
 class TestGenerateJsonOutput:
-    """Tests para generate_json_output."""
+    """Tests for generate_json_output."""
     
     def test_generate_json_output(self):
-        """Test generación de JSON."""
+        """Test JSON generation."""
         metrics = {
             'wer': 0.1,
             'word_count': 10,
@@ -88,7 +88,7 @@ class TestGenerateJsonOutput:
         try:
             generate_json_output(metrics, temp_path)
             
-            # Verificar que el archivo existe y es JSON válido
+            # Verify that the file exists and is valid JSON
             assert temp_path.exists()
             with open(temp_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -99,10 +99,10 @@ class TestGenerateJsonOutput:
 
 
 class TestGenerateReport:
-    """Tests para generate_report."""
+    """Tests for generate_report."""
     
     def test_generate_report_basic(self):
-        """Test generación de reporte básico."""
+        """Test basic report generation."""
         metrics = {
             'wer': 0.1,
             'word_count': 10,
@@ -133,7 +133,7 @@ class TestGenerateReport:
             generate_report(metrics, alignments, config, temp_path, metric_type='wer')
             assert temp_path.exists()
             
-            # Verificar que el reporte contiene información esperada
+            # Verify that the report contains expected information
             with open(temp_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 assert 'WER' in content or 'wer' in content.lower()
@@ -143,10 +143,10 @@ class TestGenerateReport:
 
 
 class TestResolveOutputPaths:
-    """Tests para resolve_output_paths."""
+    """Tests for resolve_output_paths."""
     
     def test_resolve_output_paths_directory(self):
-        """Test resolución de rutas cuando se proporciona un directorio."""
+        """Test path resolution when a directory is provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir)
             paths = resolve_output_paths(base_path, metric_type='wer')
@@ -154,26 +154,42 @@ class TestResolveOutputPaths:
             assert 'csv' in paths
             assert 'json' in paths
             assert 'report' in paths
-            assert 'wer_metrics.csv' in str(paths['csv'])
-            assert 'wer_metrics.json' in str(paths['json'])
-            assert 'wer_report.txt' in str(paths['report'])
+            assert paths['csv'].name == "output.csv"
+            assert paths['json'].name == "output.json"
+            assert paths['report'].name == "output.txt"
     
-    def test_resolve_output_paths_file(self):
-        """Test resolución de rutas cuando se proporciona un archivo."""
+    def test_resolve_output_paths_file_with_extension(self):
+        """Test path resolution when a file with extension is provided."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_path = Path(tmpdir) / "results.txt"
+            paths = resolve_output_paths(base_path, metric_type='wer')
+            
+            assert paths['csv'].stem == "results"
+            assert paths['json'].stem == "results"
+            assert paths['report'].stem == "results"
+            assert paths['csv'].suffix == ".csv"
+            assert paths['json'].suffix == ".json"
+            assert paths['report'].suffix == ".txt"
+    
+    def test_resolve_output_paths_file_without_extension(self):
+        """Test path resolution when a file without extension is provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
             base_path = Path(tmpdir) / "output"
             paths = resolve_output_paths(base_path, metric_type='cer')
             
             assert paths['csv'].stem == "output"
             assert paths['json'].stem == "output"
-            assert "output_report" in paths['report'].stem
+            assert paths['report'].stem == "output"
+            assert paths['csv'].suffix == ".csv"
+            assert paths['json'].suffix == ".json"
+            assert paths['report'].suffix == ".txt"
 
 
 class TestCheckAndConfirmOverwrite:
-    """Tests para check_and_confirm_overwrite."""
+    """Tests for check_and_confirm_overwrite."""
     
     def test_check_and_confirm_overwrite_no_existing_files(self):
-        """Test cuando no hay archivos existentes."""
+        """Test when no existing files are present."""
         with tempfile.TemporaryDirectory() as tmpdir:
             paths = {
                 'csv': Path(tmpdir) / 'test.csv',
@@ -184,7 +200,7 @@ class TestCheckAndConfirmOverwrite:
             assert result is True
     
     def test_check_and_confirm_overwrite_existing_files(self):
-        """Test cuando hay archivos existentes."""
+        """Test when existing files are present."""
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / 'test.csv'
             csv_path.touch()
@@ -194,7 +210,7 @@ class TestCheckAndConfirmOverwrite:
                 'json': Path(tmpdir) / 'test.json',
                 'report': Path(tmpdir) / 'test.txt'
             }
-            # Por ahora siempre retorna True (confirmación interactiva pendiente)
+            # For now always returns True (interactive confirmation pending)
             result = check_and_confirm_overwrite(paths)
             assert result is True
 

@@ -237,10 +237,27 @@ def calculate_metrics_batch(
     
     # Calculate aggregated metrics
     total_errors = total_substitutions + total_deletions + total_insertions
+    
+    # Handle special case: all references empty but there are errors (insertions)
+    # When total_count = 0 but total_errors > 0, WER should be 1.0 (100% error)
+    if total_count == 0:
+        if total_errors > 0:
+            # All references empty but hypotheses have words -> WER = 1.0
+            aggregated_wer = 1.0
+            aggregated_accuracy = 0.0
+        else:
+            # All references and hypotheses empty -> WER = 0.0 (no errors)
+            aggregated_wer = 0.0
+            aggregated_accuracy = 1.0
+    else:
+        # Normal case: calculate WER from total errors and total count
+        aggregated_wer = total_errors / total_count
+        aggregated_accuracy = total_correct / total_count
+    
     if metric_type == 'wer':
         aggregated_metrics = {
-            'wer': total_errors / total_count if total_count > 0 else 0.0,
-            'word_accuracy': total_correct / total_count if total_count > 0 else 0.0,
+            'wer': aggregated_wer,
+            'word_accuracy': aggregated_accuracy,
             'deletions': total_deletions,
             'insertions': total_insertions,
             'substitutions': total_substitutions,
@@ -250,8 +267,8 @@ def calculate_metrics_batch(
         }
     else:
         aggregated_metrics = {
-            'cer': total_errors / total_count if total_count > 0 else 0.0,
-            'character_accuracy': total_correct / total_count if total_count > 0 else 0.0,
+            'cer': aggregated_wer,
+            'character_accuracy': aggregated_accuracy,
             'deletions': total_deletions,
             'insertions': total_insertions,
             'substitutions': total_substitutions,

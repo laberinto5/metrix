@@ -14,11 +14,11 @@ from rich import print as rprint
 # Add src to path to import modules
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from input_handler import load_inputs
-from text_transformer import apply_basic_transformations
-from adjustments_processor import load_adjustments, apply_adjustments
-from metrics_calculator import calculate_metrics_batch
-from output_generator import (
+from src.input_handler import load_inputs
+from src.text_transformer import apply_basic_transformations, apply_stop_words_removal
+from src.adjustments_processor import load_adjustments, apply_adjustments
+from src.metrics_calculator import calculate_metrics_batch
+from src.output_generator import (
     generate_csv_output,
     generate_json_output,
     generate_report,
@@ -86,6 +86,9 @@ def wer(
     sclite_format: bool = typer.Option(
         False, "--sclite-format", "-S", help="Use sclite format in TRN files"
     ),
+    remove_stopwords: Optional[str] = typer.Option(
+        None, "--remove-stopwords", "-rs", help="Remove stop words for specified language (e.g., 'english', 'spanish', 'portuguese')"
+    ),
 ):
     """
     Calculates Word Error Rate (WER) between hypothesis and reference.
@@ -94,8 +97,15 @@ def wer(
         # Validate input options
         validate_input_options(hypothesis, reference, compact_input)
         
-        # Load inputs
-        console.print("[cyan]Loading inputs...[/cyan]")
+        # Validate that at least one output option is provided
+        if not output and not on_screen:
+            raise typer.BadParameter(
+                "You must specify either --output (-o) or --on-screen (-os) to see the results. "
+                "There's no point in calculating metrics if you won't see them."
+            )
+        
+        # Validate and load inputs (includes encoding, format, and ID matching validation)
+        console.print("[cyan]Validating and loading inputs...[/cyan]")
         inputs = load_inputs(
             hypothesis_path=hypothesis,
             reference_path=reference,
@@ -104,6 +114,13 @@ def wer(
         )
         
         console.print(f"[green]✓[/green] Loaded {len(inputs)} sentence pairs")
+        
+        # Validate adjustments if provided (before processing)
+        adjustments_data = None
+        if adjustments:
+            console.print("[cyan]Validating adjustments...[/cyan]")
+            adjustments_data = load_adjustments(adjustments)
+            console.print("[green]✓[/green] Adjustments validated and loaded")
         
         # Separate references and hypotheses
         references = [ref for _, ref, _ in inputs]
@@ -125,13 +142,6 @@ def wer(
         refs_transformed = [ref for ref, _ in transformed_pairs]
         hyps_transformed = [hyp for _, hyp in transformed_pairs]
         
-        # Process adjustments if provided
-        adjustments_data = None
-        if adjustments:
-            console.print("[cyan]Loading adjustments...[/cyan]")
-            adjustments_data = load_adjustments(adjustments)
-            console.print("[green]✓[/green] Adjustments loaded")
-        
         # Calculate metrics
         console.print("[cyan]Calculating metrics...[/cyan]")
         
@@ -140,25 +150,47 @@ def wer(
         alignments_without = None
         alignments_with = None
         
-        # Calculate without adjustments first
+        # Calculate baseline: without adjustments and without stop words removal
         metrics_without_adjustments, alignments_without = calculate_metrics_batch(
             refs_transformed, hyps_transformed, metric_type='wer'
         )
         
-        # If there are adjustments, also calculate with adjustments
+        # Calculate with adjustments and/or stop words removal (if specified)
+        # This will be the "final" version to compare against baseline
+        refs_final = refs_transformed
+        hyps_final = hyps_transformed
+        
+        # Apply adjustments if provided
         if adjustments_data:
+            console.print("[cyan]Applying adjustments...[/cyan]")
             refs_adjusted = []
             hyps_adjusted = []
-            for ref, hyp in zip(refs_transformed, hyps_transformed):
+            for ref, hyp in zip(refs_final, hyps_final):
                 ref_adj, hyp_adj = apply_adjustments(ref, hyp, adjustments_data)
                 refs_adjusted.append(ref_adj)
                 hyps_adjusted.append(hyp_adj)
-            
+            refs_final = refs_adjusted
+            hyps_final = hyps_adjusted
+        
+        # Apply stop words removal if specified (after adjustments)
+        if remove_stopwords:
+            console.print(f"[cyan]Removing stop words ({remove_stopwords})...[/cyan]")
+            refs_no_stopwords = []
+            hyps_no_stopwords = []
+            for ref, hyp in zip(refs_final, hyps_final):
+                ref_no_sw, hyp_no_sw = apply_stop_words_removal(ref, hyp, remove_stopwords)
+                refs_no_stopwords.append(ref_no_sw)
+                hyps_no_stopwords.append(hyp_no_sw)
+            refs_final = refs_no_stopwords
+            hyps_final = hyps_no_stopwords
+        
+        # Calculate final metrics (with adjustments and/or stop words if specified)
+        if adjustments_data or remove_stopwords:
             metrics_with_adjustments, alignments_with = calculate_metrics_batch(
-                refs_adjusted, hyps_adjusted, metric_type='wer'
+                refs_final, hyps_final, metric_type='wer'
             )
         
-        # Use metrics with adjustments if they exist, otherwise without adjustments
+        # Use metrics with adjustments/stopwords if they exist, otherwise without
         final_metrics = metrics_with_adjustments if metrics_with_adjustments else metrics_without_adjustments
         final_alignments = alignments_with if alignments_with else alignments_without
         
@@ -174,7 +206,8 @@ def wer(
             'keep_punctuation': keep_punctuation,
             'neutralize_hyphens': neutralize_hyphens,
             'neutralize_apostrophes': neutralize_apostrophes,
-            'sclite_format': sclite_format
+            'sclite_format': sclite_format,
+            'remove_stopwords': remove_stopwords
         }
         
         # Display on screen if requested
@@ -267,8 +300,15 @@ def cer(
         # Validate input options
         validate_input_options(hypothesis, reference, compact_input)
         
-        # Load inputs
-        console.print("[cyan]Loading inputs...[/cyan]")
+        # Validate that at least one output option is provided
+        if not output and not on_screen:
+            raise typer.BadParameter(
+                "You must specify either --output (-o) or --on-screen (-os) to see the results. "
+                "There's no point in calculating metrics if you won't see them."
+            )
+        
+        # Validate and load inputs (includes encoding, format, and ID matching validation)
+        console.print("[cyan]Validating and loading inputs...[/cyan]")
         inputs = load_inputs(
             hypothesis_path=hypothesis,
             reference_path=reference,

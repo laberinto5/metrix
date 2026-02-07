@@ -2,48 +2,58 @@
 
 [![Tests](https://github.com/USERNAME/metrix/actions/workflows/tests.yml/badge.svg)](https://github.com/USERNAME/metrix/actions/workflows/tests.yml)
 
-> **Nota:** Reemplaza `USERNAME` en el badge con tu nombre de usuario de GitHub.
+> **Note:** Replace `USERNAME` in the badge with your GitHub username.
 
-**Metrix** es una herramienta CLI en Python para calcular métricas de evaluación de sistemas ASR (Automatic Speech Recognition) y otros sistemas de procesamiento de lenguaje natural. Diseñada como una alternativa robusta y moderna a `sctk sclite`, Metrix ofrece capacidades avanzadas de transformación de texto y ajustes personalizados.
+**Metrix** is a Python CLI tool for calculating evaluation metrics for ASR (Automatic Speech Recognition) systems and other natural language processing systems. Designed as a robust and modern alternative to `sctk sclite`, Metrix offers advanced text transformation capabilities and custom adjustments.
 
-## Características Principales
+## Main Features
 
-- ✅ **Word Error Rate (WER)** - Cálculo robusto con manejo de casos especiales
-- ✅ **Character Error Rate (CER)** - Evaluación a nivel de caracteres
-- 🔄 **Sistema de Adjustments** - Reemplazos, equivalencias y limpieza de texto
-- 📊 **Múltiples formatos de salida** - CSV, JSON y reportes detallados
-- 🎨 **CLI moderna** - Interfaz bonita y fácil de usar con Rich y Typer
-- 📁 **Formatos flexibles** - Soporte para archivos TRN (nativo y sclite) y CSV compacto
+- ✅ **Word Error Rate (WER)** - Robust calculation with special case handling
+  - Support for stop words removal in multiple languages
+  - Comparison of results with and without adjustments/stop words
+- ✅ **Character Error Rate (CER)** - Character-level evaluation
+- 🔄 **Adjustments System** - Replacements, equivalences, and text cleanup
+- 📊 **Multiple output formats** - CSV, JSON, and detailed reports
+- 🎨 **Modern CLI** - Beautiful and easy-to-use interface with Rich and Typer
+- 📁 **Flexible formats** - Support for TRN files (native and sclite) and compact CSV
+- ✅ **Robust validation** - UTF-8 encoding validation, file format validation, and data consistency checks
 
-## Instalación
+## Installation
 
-### Requisitos
+### Requirements
 
-- Python 3.7 o superior
+- Python 3.7 or higher
 - pip
 
-### Pasos de Instalación
+### Installation Steps
 
-1. Clonar el repositorio:
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd metrix
 ```
 
-2. Crear y activar un entorno virtual:
+2. Create and activate a virtual environment:
 ```bash
 python3 -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Instalar dependencias:
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Uso Rápido
+4. (Optional) If you plan to use the stop words removal feature (`--remove-stopwords`), download the NLTK corpus:
+```bash
+python -c "import nltk; nltk.download('stopwords')"
+```
 
-### Ejemplo Básico - WER
+**Note:** The stop words corpus will be automatically downloaded the first time you use `--remove-stopwords`, but it's recommended to download it manually to avoid connection issues during execution.
+
+## Quick Start
+
+### Basic Example - WER
 
 ```bash
 python metrix.py wer \
@@ -52,7 +62,7 @@ python metrix.py wer \
   --on-screen
 ```
 
-### Ejemplo con Adjustments
+### Example with Adjustments
 
 ```bash
 python metrix.py wer \
@@ -63,65 +73,79 @@ python metrix.py wer \
   --on-screen
 ```
 
-### Ejemplo con CSV Compacto
+### Example with Compact CSV
 
 ```bash
 python metrix.py wer \
   --compact-input data/input.csv \
-  --output results/wer_report.txt
+  --output results/output
 ```
 
-## Comandos Disponibles
+This will generate: `results/output.txt`, `results/output.json`, `results/output.csv`
+
+## Available Commands
 
 ### `wer` - Word Error Rate
 
-Calcula el Word Error Rate entre hypothesis y reference.
+Calculates Word Error Rate between hypothesis and reference.
 
-**Opciones principales:**
+**Main options:**
 
-| Opción | Abreviación | Descripción |
+| Option | Abbreviation | Description |
 |--------|-------------|-------------|
-| `--hypothesis` | `-h` | Archivo TRN con las hypotheses |
-| `--reference` | `-r` | Archivo TRN con las referencias |
-| `--compact-input` | `-ci` | Archivo CSV compacto (ID, reference, hypothesis) |
-| `--adjustments` | `-a` | Archivo JSON con adjustments |
-| `--output` | `-o` | Ruta de salida (carpeta o archivo) |
-| `--case-sensitive` | `-cs` | Habilitar case-sensitive |
-| `--keep-punctuation` | `-kp` | Mantener puntuación |
-| `--neutralize-hyphens` | `-nh` | Reemplazar guiones por espacios |
-| `--neutralize-apostrophes` | `-na` | Remover apostrofes |
-| `--on-screen` | `-os` | Mostrar resultados en pantalla |
-| `--sclite-format` | `-S` | Usar formato sclite en archivos TRN |
+| `--hypothesis` | `-h` | TRN file with hypotheses |
+| `--reference` | `-r` | TRN file with references |
+| `--compact-input` | `-ci` | Compact CSV file (ID, reference, hypothesis) |
+| `--adjustments` | `-a` | JSON file with adjustments |
+| `--output` | `-o` | Output path (folder or file) |
+| `--case-sensitive` | `-cs` | Enable case-sensitive |
+| `--keep-punctuation` | `-kp` | Keep punctuation |
+| `--neutralize-hyphens` | `-nh` | Replace hyphens with spaces |
+| `--neutralize-apostrophes` | `-na` | Remove apostrophes |
+| `--on-screen` | `-os` | Display results on screen |
+| `--sclite-format` | `-S` | Use sclite format in TRN files |
+| `--remove-stopwords` | `-rs` | Remove stop words for specified language (e.g., 'english', 'spanish', 'portuguese') |
 
-**Nota:** Las opciones `-h/-r` y `-ci` son mutuamente exclusivas. Debes usar una u otra.
+**Note:** Options `-h/-r` and `-ci` are mutually exclusive. You must use one or the other.
+
+**Important note:** You must specify at least one output option: `--output` (`-o`) or `--on-screen` (`-os`). There's no point in calculating metrics if you won't see the results.
+
+**Note about `--remove-stopwords`:**
+- Requires NLTK installed
+- Only available for WER (not for CER)
+- Supported languages: english, spanish, portuguese, french, german, italian
+- The stop words corpus will be automatically downloaded the first time it's used
+- Applied after adjustments, just before metrics calculation
 
 ### `cer` - Character Error Rate
 
-Calcula el Character Error Rate entre hypothesis y reference. Tiene las mismas opciones que `wer`, excepto `--adjustments` (no aplica para CER).
+Calculates Character Error Rate between hypothesis and reference. Has the same options as `wer`, except `--adjustments` and `--remove-stopwords` (do not apply to CER).
 
-## Formatos de Archivos
+**Important note:** You must specify at least one output option: `--output` (`-o`) or `--on-screen` (`-os`).
 
-### Archivos TRN
+## File Formats
 
-Metrix soporta dos formatos de archivos TRN:
+### TRN Files
 
-**Formato nativo de Metrix:**
+Metrix supports two TRN file formats:
+
+**Native Metrix format:**
 ```
 audio0001.wav: this is a test sentence
 audio0002.wav: want to go to the store
 ```
 
-**Formato sclite:**
+**Sclite format:**
 ```
 this is a test sentence (audio0001.wav)
 want to go to the store (audio0002.wav)
 ```
 
-Usa la opción `--sclite-format` (`-S`) cuando trabajes con archivos en formato sclite.
+Use the `--sclite-format` (`-S`) option when working with sclite format files.
 
-### CSV Compacto
+### Compact CSV
 
-El formato CSV compacto permite proporcionar hypothesis y reference en un solo archivo:
+The compact CSV format allows you to provide hypothesis and reference in a single file:
 
 ```csv
 ID,reference,hypothesis
@@ -129,9 +153,9 @@ audio0001.wav,this is a test sentence,this is a test sentence
 audio0002.wav,want to go to the store,wanna go to the store
 ```
 
-### Archivo de Adjustments (JSON)
+### Adjustments File (JSON)
 
-El archivo de adjustments permite definir transformaciones avanzadas:
+The adjustments file allows you to define advanced transformations:
 
 ```json
 {
@@ -151,102 +175,116 @@ El archivo de adjustments permite definir transformaciones avanzadas:
 }
 ```
 
-**Campos del JSON de adjustments:**
+**Adjustments JSON fields:**
 
-- `case_sensitive` (boolean): Si los reemplazos deben ser case-sensitive (default: `false`)
-- `reference_replacements` (object): Reemplazos solo en la referencia (corrección de errores). Usa word boundaries.
-- `equivalences` (object): Equivalencias entre formas válidas. La primera forma en la lista es la canónica.
-- `clean_up` (array): Lista de palabras/interjecciones a remover de ambos textos
+- `case_sensitive` (boolean): Whether replacements should be case-sensitive (default: `false`)
+- `reference_replacements` (object): Replacements only in the reference (error correction). Uses word boundaries.
+- `equivalences` (object): Equivalences between valid forms. The first form in the list is the canonical one.
+- `clean_up` (array): List of words/interjections to remove from both texts
 
-**Orden de aplicación:**
-1. `reference_replacements` (solo en referencia)
-2. Transformaciones básicas (case, puntuación, etc.)
-3. `equivalences` (en ambos textos)
-4. `clean_up` (en ambos textos)
+**Application order:**
+1. Basic transformations (case, punctuation, etc.)
+2. `reference_replacements` (only in reference)
+3. `equivalences` (in both texts)
+4. `clean_up` (in both texts)
+5. Stop words removal (if `--remove-stopwords` is specified, only for WER)
 
-## Salidas
+## Outputs
 
-Metrix genera tres tipos de archivos de salida:
+Metrix generates three types of output files when `--output` is specified:
 
-1. **CSV** (`*_metrics.csv`) - Métricas en formato tabular
-2. **JSON** (`*_metrics.json`) - Métricas en formato JSON
-3. **Reporte** (`*_report.txt`) - Reporte detallado con:
-   - Resumen de configuración
-   - Resultados numéricos (con y sin adjustments si aplica)
-   - Alineaciones frase por frase
+**File naming:**
+- If you specify `-o output.txt` or `-o output`: generates `output.txt`, `output.json`, `output.csv`
+- If you specify `-o results/`: generates `results/output.txt`, `results/output.json`, `results/output.csv`
+- Files do not include suffixes like `_report` or `_metrics`
 
-Si usas `--adjustments`, el reporte mostrará métricas tanto con como sin adjustments para comparación.
+**File types:**
 
-## Estructura del Proyecto
+1. **CSV** (`.csv`) - Metrics in tabular format
+2. **JSON** (`.json`) - Metrics in JSON format
+3. **Report** (`.txt`) - Detailed report with:
+   - Configuration summary
+   - Numerical results (with and without adjustments/stop words if applicable)
+   - Sentence-by-sentence alignments
+
+**Note:** If you use `--adjustments` or `--remove-stopwords`, the report will show metrics both with and without these transformations for comparison.
+
+**On-screen output:**
+If you use `--on-screen` (`-os`), results will be displayed directly in the terminal with beautiful formatting using Rich.
+
+## Project Structure
 
 ```
 metrix/
-├── metrix.py              # Punto de entrada principal (CLI)
-├── requirements.txt       # Dependencias Python
-├── README.md              # Este archivo
-├── src/                   # Módulos del código
-│   ├── input_handler.py   # Lectura de archivos TRN y CSV
-│   ├── text_transformer.py # Transformaciones básicas de texto
-│   ├── adjustments_processor.py # Procesamiento de adjustments
-│   ├── metrics_calculator.py # Cálculo de WER/CER con Jiwer
-│   └── output_generator.py # Generación de outputs
-├── test/                  # Tests unitarios
-├── samples/               # Archivos de ejemplo
+├── metrix.py              # Main entry point (CLI)
+├── requirements.txt       # Python dependencies
+├── README.md              # This file
+├── src/                   # Code modules
+│   ├── input_handler.py   # TRN and CSV file reading
+│   ├── input_validator.py # Encoding, format and ID validation
+│   ├── text_transformer.py # Basic transformations and stop words removal
+│   ├── adjustments_processor.py # Adjustments processing
+│   ├── metrics_calculator.py # WER/CER calculation with Jiwer
+│   └── output_generator.py # Output generation
+├── test/                  # Unit tests
+├── samples/               # Example files
 │   ├── example_hypothesis.trn
 │   ├── example_reference.trn
 │   ├── example_compact.csv
 │   └── example_adjustments.json
-└── documentation/         # Documentación adicional
-    ├── PLAN.md            # Plan de implementación
-    └── IMPLEMENTATION_SUMMARY.md # Resumen de implementación
+└── documentation/         # Additional documentation
+    ├── WER_GUIDE.md       # Technical guide for WER
+    └── CER_GUIDE.md       # Technical guide for CER
 ```
 
-## Métricas Implementadas
+## Implemented Metrics
 
 ### ✅ Word Error Rate (WER)
 
-WER es la métrica estándar para evaluar sistemas ASR. Metrix calcula WER de forma robusta:
+WER is the standard metric for evaluating ASR systems. Metrix calculates WER robustly:
 
-- Manejo de casos especiales (referencias vacías)
-- Integración con Jiwer para alineación y cálculo
-- Soporte para adjustments personalizados
-- Cálculo con y sin adjustments para comparación
+- Special case handling (empty references)
+- Integration with Jiwer for alignment and calculation
+- Support for custom adjustments
+- Calculation with and without adjustments for comparison
+- Stop words removal support (optional)
 
-**Fórmula:** `WER = (S + D + I) / N`
+**Formula:** `WER = (S + D + I) / N`
 
-Donde:
-- S = Substituciones
+Where:
+- S = Substitutions
 - D = Deletions
 - I = Insertions
-- N = Número total de palabras en la referencia
+- N = Total number of words in the reference
 
 ### ✅ Character Error Rate (CER)
 
-CER evalúa el rendimiento a nivel de caracteres. Útil para sistemas que procesan texto sin espacios o para análisis más granular.
+CER evaluates performance at the character level. Useful for systems that process text without spaces or for more granular analysis.
 
-**Fórmula:** `CER = (S + D + I) / N`
+**Formula:** `CER = (S + D + I) / N`
 
-Donde N es el número total de caracteres en la referencia.
+Where N is the total number of characters in the reference.
 
-### 🔜 Próximamente
+### 🔜 Coming Soon
 
 - MER (Match Error Rate)
 - TER (Translation Error Rate)
 - DER (Diarization Error Rate)
-- Precision, Recall, F1 y matriz de confusión (para sistemas de clasificación)
+- Precision, Recall, F1 and confusion matrix (for classification systems)
 
-## Dependencias
+## Dependencies
 
-- **Typer** - Framework CLI moderno
-- **Rich** - Formato bonito en terminal
-- **Jiwer** - Cálculo de métricas WER/CER
-- **NumPy** - Operaciones numéricas
-- **pandas** - Manejo de datos tabulares
-- **Matplotlib** - Visualizaciones (para futuras funcionalidades)
+- **Typer** - Modern CLI framework
+- **Rich** - Beautiful terminal formatting
+- **Jiwer** - WER/CER metrics calculation
+- **NumPy** - Numerical operations
+- **pandas** - Tabular data handling
+- **Matplotlib** - Visualizations (for future features)
+- **NLTK** - Stop words removal (optional, only if you use `--remove-stopwords`)
 
-## Ejemplos de Uso
+## Usage Examples
 
-### Ejemplo 1: Cálculo básico de WER
+### Example 1: Basic WER calculation
 
 ```bash
 python metrix.py wer \
@@ -255,7 +293,9 @@ python metrix.py wer \
   -o results/
 ```
 
-### Ejemplo 2: WER con adjustments y visualización
+This will generate: `results/output.txt`, `results/output.json`, `results/output.csv`
+
+### Example 2: WER with adjustments and visualization
 
 ```bash
 python metrix.py wer \
@@ -266,15 +306,29 @@ python metrix.py wer \
   -o results/
 ```
 
-### Ejemplo 3: Usando CSV compacto
+### Example 3: Using compact CSV
 
 ```bash
 python metrix.py wer \
   -ci data/evaluation.csv \
-  -o results/wer_results
+  -o results/output
 ```
 
-### Ejemplo 4: CER con transformaciones
+This will generate: `results/output.txt`, `results/output.json`, `results/output.csv`
+
+### Example 4: WER with stop words removal
+
+```bash
+python metrix.py wer \
+  -h data/hypothesis.trn \
+  -r data/reference.trn \
+  --remove-stopwords spanish \
+  -o results/wer_spanish
+```
+
+This will generate: `results/wer_spanish.txt`, `results/wer_spanish.json`, `results/wer_spanish.csv`
+
+### Example 5: CER with transformations
 
 ```bash
 python metrix.py cer \
@@ -285,47 +339,55 @@ python metrix.py cer \
   -o results/cer_results
 ```
 
-## Notas Técnicas
+This will generate: `results/cer_results.txt`, `results/cer_results.json`, `results/cer_results.csv`
 
-- **Manejo de referencias vacías:** Metrix maneja correctamente los casos donde la referencia está vacía, calculándolos manualmente ya que Jiwer no los soporta nativamente.
-- **Word boundaries:** Todos los reemplazos en adjustments usan word boundaries para evitar coincidencias en substrings.
-- **Orden de transformaciones:** Las transformaciones se aplican en un orden específico para garantizar resultados consistentes.
-- **Compatibilidad sclite:** Metrix es compatible con el formato de archivos TRN usado por sclite, facilitando la migración.
+## Technical Notes
 
-## Contribuir
+- **Empty reference handling:** Metrix correctly handles cases where the reference is empty, calculating them manually since Jiwer doesn't support them natively.
+- **Word boundaries:** All replacements in adjustments use word boundaries to avoid substring matches.
+- **Transformation order:** Transformations are applied in a specific order to ensure consistent results:
+  1. Basic transformations (case, punctuation, hyphens, apostrophes)
+  2. Adjustments (reference_replacements, equivalences, clean_up)
+  3. Stop words removal (if specified, only for WER)
+  4. Metrics calculation
+- **Sclite compatibility:** Metrix is compatible with the TRN file format used by sclite, facilitating migration.
+- **Input validation:** Metrix validates UTF-8 encoding, file formats, ID matching, and adjustments consistency before processing.
+- **Mandatory output:** You must specify at least `--output` or `--on-screen` to see the results.
 
-Las contribuciones son bienvenidas. Por favor:
+## Contributing
 
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+Contributions are welcome. Please:
 
-## Licencia
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-[Especificar licencia aquí]
+## License
 
-## Referencias
+[Specify license here]
+
+## References
 
 - [Jiwer Documentation](https://github.com/jitsi/jiwer)
 - [NIST SCTK sclite](https://github.com/usnistgov/SCTK)
 
-## Documentación Técnica
+## Technical Documentation
 
-Para detalles técnicos sobre cómo se calculan las métricas y cómo funcionan las transformaciones:
+For technical details on how metrics are calculated and how transformations work:
 
-- [`documentation/WER_GUIDE.md`](documentation/WER_GUIDE.md) - Guía técnica detallada sobre Word Error Rate (WER)
-  - Proceso de transformaciones de texto
-  - Sistema de adjustments
-  - Cálculo de métricas
-  - Casos especiales
-  - Integración con Jiwer
+- [`documentation/WER_GUIDE.md`](documentation/WER_GUIDE.md) - Detailed technical guide on Word Error Rate (WER)
+  - Text transformation process
+  - Adjustments system
+  - Metrics calculation
+  - Special cases
+  - Jiwer integration
 
-- [`documentation/CER_GUIDE.md`](documentation/CER_GUIDE.md) - Guía técnica detallada sobre Character Error Rate (CER)
-  - Transformaciones aplicadas
-  - Cálculo a nivel de caracteres
-  - Diferencias con WER
-  - Casos de uso recomendados
+- [`documentation/CER_GUIDE.md`](documentation/CER_GUIDE.md) - Detailed technical guide on Character Error Rate (CER)
+  - Applied transformations
+  - Character-level calculation
+  - Differences with WER
+  - Recommended use cases
 
 ---

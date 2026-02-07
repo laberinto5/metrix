@@ -278,26 +278,37 @@ def resolve_output_paths(base_path: Path, metric_type: str = 'wer') -> Dict[str,
     """
     Resolves output paths for CSV, JSON and report.
     
+    The naming convention is:
+    - If user provides "output.txt" or "output": files will be "output.txt", "output.json", "output.csv"
+    - If user provides a directory "folder/": files will be "folder/output.txt", "folder/output.json", "folder/output.csv"
+    - No suffixes like "_report" or "_metrics" are added
+    
     Args:
         base_path: Base path provided by user (can be folder or file)
-        metric_type: 'wer' or 'cer'
+        metric_type: 'wer' or 'cer' (not used in current implementation, kept for compatibility)
     
     Returns:
         Dictionary with paths: {'csv': Path, 'json': Path, 'report': Path}
     """
-    # If it's a directory, create files with default names
-    if base_path.is_dir():
-        csv_path = base_path / f"{metric_type}_metrics.csv"
-        json_path = base_path / f"{metric_type}_metrics.json"
-        report_path = base_path / f"{metric_type}_report.txt"
+    # If it's a directory, create files with base name "output"
+    if base_path.is_dir() or (not base_path.exists() and str(base_path).endswith('/')):
+        # Treat as directory
+        csv_path = base_path / "output.csv"
+        json_path = base_path / "output.json"
+        report_path = base_path / "output.txt"
     else:
-        # It's a file, determine extensions
+        # It's a file path
+        # Get the base name without extension
         base_name = base_path.stem
+        # If the path has no stem (e.g., just ".txt"), use the full name
+        if not base_name:
+            base_name = base_path.name
         parent = base_path.parent
         
+        # Create paths with same base name but different extensions
         csv_path = parent / f"{base_name}.csv"
         json_path = parent / f"{base_name}.json"
-        report_path = parent / f"{base_name}_report.txt"
+        report_path = parent / f"{base_name}.txt"
     
     return {
         'csv': csv_path,

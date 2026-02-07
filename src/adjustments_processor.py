@@ -12,6 +12,11 @@ def load_adjustments(file_path: Path) -> Dict:
     """
     Loads and validates the JSON adjustments file.
     
+    This function now uses input_validator for complete validation including:
+    - UTF-8 encoding
+    - JSON structure
+    - Consistency checks (no conflicting rules)
+    
     Args:
         file_path: Path to the JSON file
     
@@ -20,37 +25,13 @@ def load_adjustments(file_path: Path) -> Dict:
     
     Raises:
         FileNotFoundError: If file does not exist
-        ValueError: If JSON is invalid or has incorrect structure
+        ValueError: If JSON is invalid, has incorrect structure, or contains inconsistencies
     """
-    if not file_path.exists():
-        raise FileNotFoundError(f"Adjustments file not found: {file_path}")
-    
-    with open(file_path, 'r', encoding='utf-8') as f:
-        try:
-            data = json.load(f)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Error parsing adjustments JSON: {e}")
-    
-    # Validate basic structure (fields are optional, but if they exist must be correct type)
-    valid_keys = {'reference_replacements', 'equivalences', 'clean_up', 'case_sensitive'}
-    for key in data.keys():
-        if key not in valid_keys:
-            raise ValueError(f"Unknown key in adjustments JSON: {key}")
-    
-    # Validate types
-    if 'reference_replacements' in data and not isinstance(data['reference_replacements'], dict):
-        raise ValueError("'reference_replacements' must be an object/dictionary")
-    
-    if 'equivalences' in data and not isinstance(data['equivalences'], dict):
-        raise ValueError("'equivalences' must be an object/dictionary")
-    
-    if 'clean_up' in data and not isinstance(data['clean_up'], list):
-        raise ValueError("'clean_up' must be a list")
-    
-    if 'case_sensitive' in data and not isinstance(data['case_sensitive'], bool):
-        raise ValueError("'case_sensitive' must be a boolean")
-    
-    return data
+    try:
+        from .input_validator import validate_adjustments
+    except ImportError:
+        from input_validator import validate_adjustments
+    return validate_adjustments(file_path)
 
 
 def apply_reference_replacements(
